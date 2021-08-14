@@ -6,12 +6,13 @@ import (
 	"io"
 )
 
+// Parser parses hack assembly program line by line.
 type Parser struct {
 	scanner *bufio.Scanner
 	currentCommand string
 }
 
-
+// NewParser returns *Parser object which has commands
 func NewParser(reader io.Reader) *Parser {
 	parser := &Parser{}
 	parser.scanner = bufio.NewScanner(reader)
