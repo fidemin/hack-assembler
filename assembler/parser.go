@@ -9,9 +9,9 @@ import (
 type CommandType string
 
 const (
-	A_COMMAND CommandType = "A"
-	C_COMMAND = "C"
-	L_COMMAND = "L"
+	ACommand CommandType = "A"
+	CCommand             = "C"
+	LCommand             = "L"
 )
 
 // Parser parses hack assembly program line by line.
@@ -43,13 +43,13 @@ func (p *Parser) Advance() bool {
 
 func (p *Parser) commandType() CommandType {
 	if p.currentCommand[0] == '@' {
-		return A_COMMAND
+		return ACommand
 	}
 
 	if p.currentCommand[0] == '(' {
-		return L_COMMAND
+		return LCommand
 	}
 
-	return C_COMMAND
+	return CCommand
 }
 

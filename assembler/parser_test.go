@@ -49,9 +49,9 @@ func TestParser_commandType(t *testing.T) {
 		wanted CommandType
 
 	}{
-		{command: "@100", wanted: A_COMMAND},
-		{command: "(LOOP)", wanted: L_COMMAND},
-		{command: "D=D-A", wanted: C_COMMAND},
+		{command: "@100", wanted: ACommand},
+		{command: "(LOOP)", wanted: LCommand},
+		{command: "D=D-A", wanted: CCommand},
 	}
 
 	for _, data := range testDataList {
