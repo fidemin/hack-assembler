@@ -6,6 +6,14 @@ import (
 	"io"
 )
 
+type CommandType string
+
+const (
+	A_COMMAND CommandType = "A"
+	C_COMMAND = "C"
+	L_COMMAND = "L"
+)
+
 // Parser parses hack assembly program line by line.
 type Parser struct {
 	scanner *bufio.Scanner
@@ -31,5 +39,17 @@ func (p *Parser) Advance() bool {
 	}
 
 	return false
+}
+
+func (p *Parser) commandType() CommandType {
+	if p.currentCommand[0] == '@' {
+		return A_COMMAND
+	}
+
+	if p.currentCommand[0] == '(' {
+		return L_COMMAND
+	}
+
+	return C_COMMAND
 }
 
