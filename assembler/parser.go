@@ -31,8 +31,9 @@ func NewParser(reader io.Reader) *Parser {
 
 // Advance reads next line and make it to current command
 func (p *Parser) Advance() bool {
+	// TODO: comment should be considered
 	if p.scanner.Scan() {
-		p.currentCommand = strings.TrimSpace(p.scanner.Text())
+		p.currentCommand = strings.ReplaceAll(strings.TrimSpace(p.scanner.Text()), " ", "")
 		return true
 	}
 
@@ -66,3 +67,25 @@ func (p *Parser) symbol() string {
 	return ""
 }
 
+func (p *Parser) destCompJump() (dest string, comp string, jump string) {
+	if p.currentCommandType == CCommand {
+		// C type command: dest=comp;jump
+		// jump or dest can be omitted
+		jumpSplit := strings.Split(p.currentCommand, ";")
+		if len(jumpSplit) == 2 {
+			// e.g. D;JGT
+			jump = jumpSplit[1]
+		}
+		destComp := jumpSplit[0]
+		destCompSplit := strings.Split(destComp, "=")
+		if len(destCompSplit) == 2 {
+			// e.g. D=D+A
+			dest = destCompSplit[0]
+			comp = destCompSplit[1]
+		} else {
+			// e.g. D;JGT
+			comp = destCompSplit[0]
+		}
+	}
+	return
+}

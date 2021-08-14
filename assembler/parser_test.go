@@ -44,7 +44,7 @@ M=1`
 }
 
 func TestParser_commandType(t *testing.T) {
-	testDataList := []struct {
+	tests := []struct {
 		command string
 		wanted CommandType
 	}{
@@ -53,17 +53,17 @@ func TestParser_commandType(t *testing.T) {
 		{command: "D=D-A", wanted: CCommand},
 	}
 
-	for _, data := range testDataList {
+	for _, test := range tests {
 		parser := &Parser{}
-		parser.currentCommand = data.command
-		if got := parser.commandType(); got != data.wanted {
-			t.Errorf("commandType() = %s, want %s", got, data.wanted)
+		parser.currentCommand = test.command
+		if got := parser.commandType(); got != test.wanted {
+			t.Errorf("commandType() = %s, want %s", got, test.wanted)
 		}
 	}
 }
 
 func TestParser_symbol(t *testing.T) {
-	testDataList := []struct {
+	tests := []struct {
 		command string
 		commandType CommandType
 		wanted string
@@ -73,12 +73,40 @@ func TestParser_symbol(t *testing.T) {
 		{command: "0;JMP", commandType: CCommand, wanted: ""},
 	}
 
-	for _, data := range testDataList {
+	for _, test := range tests {
 		parser := &Parser{}
-		parser.currentCommand = data.command
-		parser.currentCommandType = data.commandType
-		if got := parser.symbol(); got != data.wanted {
-			t.Errorf("symbol() = %s, want %s", got, data.wanted)
+		parser.currentCommand = test.command
+		parser.currentCommandType = test.commandType
+		if got := parser.symbol(); got != test.wanted {
+			t.Errorf("symbol() = %s, want %s", got, test.wanted)
+		}
+	}
+}
+
+func TestParser_destCompJump(t *testing.T) {
+	tests := []struct {
+		command string
+		commandType CommandType
+		dest string
+		comp string
+		jump string
+	} {
+		{command: "D;JGT", commandType: CCommand, dest: "", comp: "D", jump: "JGT"},
+		{command: "D=D+A", commandType: CCommand, dest: "D", comp: "D+A", jump: ""},
+		{command: "D=D+A;JGT", commandType: CCommand, dest: "D", comp: "D+A", jump: "JGT"},
+		{command: "@i", commandType: ACommand, dest: "", comp: "", jump: ""},
+		{command: "(LOOP)", commandType: LCommand, dest: "", comp: "", jump: ""},
+	}
+
+	for _, test := range tests {
+		parser := &Parser{}
+		parser.currentCommand = test.command
+		parser.currentCommandType = test.commandType
+		dest, comp, jump := parser.destCompJump()
+		if (dest != test.dest) || (comp != test.comp) || (jump != test.jump) {
+			t.Errorf(
+				"destCompJump() = %s, %s, %s, want %s, %s, %s",
+				dest, comp, jump, test.dest, test.comp, test.jump)
 		}
 	}
 }
