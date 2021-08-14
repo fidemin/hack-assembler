@@ -32,6 +32,7 @@ func NewParser(reader io.Reader) *Parser {
 // Advance reads next line and make it to current command
 func (p *Parser) Advance() bool {
 	// TODO: comment should be considered
+	// TODO: only whitespace line should be considered
 	if p.scanner.Scan() {
 		p.currentCommand = strings.ReplaceAll(strings.TrimSpace(p.scanner.Text()), " ", "")
 		return true
