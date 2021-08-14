@@ -47,7 +47,6 @@ func TestParser_commandType(t *testing.T) {
 	testDataList := []struct {
 		command string
 		wanted CommandType
-
 	}{
 		{command: "@100", wanted: ACommand},
 		{command: "(LOOP)", wanted: LCommand},
@@ -59,6 +58,27 @@ func TestParser_commandType(t *testing.T) {
 		parser.currentCommand = data.command
 		if got := parser.commandType(); got != data.wanted {
 			t.Errorf("commandType() = %s, want %s", got, data.wanted)
+		}
+	}
+}
+
+func TestParser_symbol(t *testing.T) {
+	testDataList := []struct {
+		command string
+		commandType CommandType
+		wanted string
+	}{
+		{command: "(LOOP)", commandType: LCommand, wanted: "LOOP"},
+		{command: "@100", commandType: ACommand, wanted: "100"},
+		{command: "0;JMP", commandType: CCommand, wanted: ""},
+	}
+
+	for _, data := range testDataList {
+		parser := &Parser{}
+		parser.currentCommand = data.command
+		parser.currentCommandType = data.commandType
+		if got := parser.symbol(); got != data.wanted {
+			t.Errorf("symbol() = %s, want %s", got, data.wanted)
 		}
 	}
 }
