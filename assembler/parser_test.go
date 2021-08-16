@@ -7,39 +7,34 @@ import (
 
 func TestParser_Advance(t *testing.T) {
 	commands := `@i
-M=1`
+D=D-A`
 	reader := strings.NewReader(commands)
 	parser := NewParser(reader)
 
-	// test first line of commands
-	wantedBool1 := true
-	wantedCommand1 := "@i"
-
-	if got := parser.Advance(); got != wantedBool1 {
-		t.Errorf("Advance() = %t, want %t", got, wantedBool1)
+	tests := []struct {
+		command     string
+		commandType CommandType
+		advance bool
+	}{
+		{command: "@i", commandType: ACommand, advance: true},
+		{command: "D=D-A", commandType: CCommand, advance: true},
+		{command: "", commandType: NCommand, advance: false},
 	}
 
-	if parser.currentCommand != wantedCommand1 {
-		t.Errorf("currentCommand = %s, want %s", parser.currentCommand, wantedCommand1)
-	}
+	for _, test := range tests {
+		if got := parser.Advance(); got != test.advance {
+			t.Errorf("Advance() = %t, want %t", got, test.advance)
+		}
 
-	// test second line of commands
-	wantedBool2 := true
-	wantedCommand2 := "M=1"
+		if parser.currentCommand != test.command  {
+			t.Errorf("currentCommand = %s, want %s", parser.currentCommand, test.command)
+		}
 
-	if got := parser.Advance(); got != wantedBool2 {
-		t.Errorf("Advance() = %t, want %t", got, wantedBool2)
-	}
-
-	if parser.currentCommand != wantedCommand2 {
-		t.Errorf("currentCommand = %s, want %s", parser.currentCommand, wantedCommand1)
-	}
-
-	// test no next line
-	wantedBool3 := false
-
-	if got := parser.Advance(); got != wantedBool3 {
-		t.Errorf("Advance() = %t, want %t", got, wantedBool2)
+		if parser.currentCommandType != test.commandType {
+			t.Errorf(
+				"currentCommandType = %s, want %s",
+				parser.currentCommandType, test.commandType)
+		}
 	}
 }
 

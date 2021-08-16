@@ -11,8 +11,9 @@ type CommandType string
 
 const (
 	ACommand CommandType = "A"
-	CCommand             = "C"
-	LCommand             = "L"
+	CCommand CommandType = "C"
+	LCommand CommandType = "L"
+	NCommand CommandType = "N"
 )
 
 // Parser parses hack assembly program line by line.
@@ -33,8 +34,14 @@ func NewParser(reader io.Reader) *Parser {
 func (p *Parser) Advance() bool {
 	// TODO: comment should be considered
 	// TODO: only whitespace line should be considered
+
+	// reset
+	p.currentCommand = ""
+	p.currentCommandType = NCommand
+
 	if p.scanner.Scan() {
 		p.currentCommand = strings.ReplaceAll(strings.TrimSpace(p.scanner.Text()), " ", "")
+		p.currentCommandType = p.commandType()
 		return true
 	}
 
@@ -47,13 +54,14 @@ func (p *Parser) Advance() bool {
 
 func (p *Parser) commandType() CommandType {
 	if p.currentCommand[0] == '@' {
-		p.currentCommandType = ACommand
-	} else if p.currentCommand[0] == '(' {
-		p.currentCommandType = LCommand
-	} else {
-		p.currentCommandType = CCommand
+		return ACommand
 	}
-	return p.currentCommandType
+
+	if p.currentCommand[0] == '(' {
+		return LCommand
+	}
+
+	return CCommand
 }
 
 func (p *Parser) symbol() string {
