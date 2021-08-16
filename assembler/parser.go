@@ -7,20 +7,10 @@ import (
 	"strings"
 )
 
-type CommandType string
-
-const (
-	ACommand CommandType = "A"
-	CCommand CommandType = "C"
-	LCommand CommandType = "L"
-	NCommand CommandType = "N"
-)
-
 // Parser parses hack assembly program line by line.
 type Parser struct {
 	scanner *bufio.Scanner
 	currentCommand string
-	currentCommandType CommandType
 }
 
 // NewParser returns *Parser object which has commands
@@ -37,11 +27,9 @@ func (p *Parser) Advance() bool {
 
 	// reset
 	p.currentCommand = ""
-	p.currentCommandType = NCommand
 
 	if p.scanner.Scan() {
 		p.currentCommand = strings.ReplaceAll(strings.TrimSpace(p.scanner.Text()), " ", "")
-		p.currentCommandType = p.commandType()
 		return true
 	}
 
@@ -50,6 +38,28 @@ func (p *Parser) Advance() bool {
 	}
 
 	return false
+}
+
+// Parse parses currentCommand and convert it to Command object
+func (p *Parser) Parse() Command {
+	var symbol, dest, comp, jump string
+	commandType := p.commandType()
+
+	if commandType == ACommand {
+		symbol = p.symbolFromACommand()
+	} else if commandType == LCommand {
+		symbol = p.symbolFromLCommand()
+	} else if commandType == CCommand {
+		dest, comp, jump = p.destCompJump()
+	}
+
+	return Command{
+		CommandType: commandType,
+		Symbol: symbol,
+		Dest: dest,
+		Comp: comp,
+		Jump: jump,
+	}
 }
 
 func (p *Parser) commandType() CommandType {
@@ -64,37 +74,31 @@ func (p *Parser) commandType() CommandType {
 	return CCommand
 }
 
-func (p *Parser) symbol() string {
-	if p.currentCommandType == ACommand {
-		return strings.TrimLeft(p.currentCommand, "@")
-	}
+func (p *Parser) symbolFromACommand() string {
+	return strings.TrimLeft(p.currentCommand, "@")
+}
 
-	if p.currentCommandType == LCommand {
-		return strings.TrimRight(strings.TrimLeft(p.currentCommand, "("), ")")
-	}
-
-	return ""
+func (p *Parser) symbolFromLCommand() string {
+	return strings.TrimRight(strings.TrimLeft(p.currentCommand, "("), ")")
 }
 
 func (p *Parser) destCompJump() (dest string, comp string, jump string) {
-	if p.currentCommandType == CCommand {
-		// C type command: dest=comp;jump
-		// jump or dest can be omitted
-		jumpSplit := strings.Split(p.currentCommand, ";")
-		if len(jumpSplit) == 2 {
-			// e.g. D;JGT
-			jump = jumpSplit[1]
-		}
-		destComp := jumpSplit[0]
-		destCompSplit := strings.Split(destComp, "=")
-		if len(destCompSplit) == 2 {
-			// e.g. D=D+A
-			dest = destCompSplit[0]
-			comp = destCompSplit[1]
-		} else {
-			// e.g. D;JGT
-			comp = destCompSplit[0]
-		}
+	// C type command: dest=comp;jump
+	// jump or dest can be omitted
+	jumpSplit := strings.Split(p.currentCommand, ";")
+	if len(jumpSplit) == 2 {
+		// e.g. D;JGT
+		jump = jumpSplit[1]
+	}
+	destComp := jumpSplit[0]
+	destCompSplit := strings.Split(destComp, "=")
+	if len(destCompSplit) == 2 {
+		// e.g. D=D+A
+		dest = destCompSplit[0]
+		comp = destCompSplit[1]
+	} else {
+		// e.g. D;JGT
+		comp = destCompSplit[0]
 	}
 	return
 }

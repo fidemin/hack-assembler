@@ -12,13 +12,12 @@ D=D-A`
 	parser := NewParser(reader)
 
 	tests := []struct {
-		command     string
-		commandType CommandType
+		command string
 		advance bool
 	}{
-		{command: "@i", commandType: ACommand, advance: true},
-		{command: "D=D-A", commandType: CCommand, advance: true},
-		{command: "", commandType: NCommand, advance: false},
+		{command: "@i", advance: true},
+		{command: "D=D-A", advance: true},
+		{command: "", advance: false},
 	}
 
 	for _, test := range tests {
@@ -29,11 +28,27 @@ D=D-A`
 		if parser.currentCommand != test.command  {
 			t.Errorf("currentCommand = %s, want %s", parser.currentCommand, test.command)
 		}
+	}
+}
 
-		if parser.currentCommandType != test.commandType {
-			t.Errorf(
-				"currentCommandType = %s, want %s",
-				parser.currentCommandType, test.commandType)
+func TestParser_Parse(t *testing.T) {
+	tests := []struct {
+		commandString string
+		command Command
+	}{
+		{commandString: "@i", command: Command{CommandType: ACommand, Symbol: "i"}},
+		{commandString: "@100", command: Command{CommandType: ACommand, Symbol: "100"}},
+		{commandString: "(LOOP)", command: Command{CommandType: LCommand, Symbol: "LOOP"}},
+		{commandString: "D;JGT", command: Command{CommandType: CCommand, Dest: "", Comp: "D", Jump: "JGT"}},
+		{commandString: "D=D+A", command: Command{CommandType: CCommand, Dest: "D", Comp: "D+A", Jump: ""}},
+		{commandString: "D=D+A;JGT", command: Command{CommandType: CCommand, Dest: "D", Comp: "D+A", Jump: "JGT"}},
+	}
+
+	for _, test := range tests {
+		parser := Parser{}
+		parser.currentCommand = test.commandString
+		if got := parser.Parse(); got != test.command {
+			t.Errorf("Parse() = %+v, want %+v", got, test.command)
 		}
 	}
 }
@@ -57,23 +72,37 @@ func TestParser_commandType(t *testing.T) {
 	}
 }
 
-func TestParser_symbol(t *testing.T) {
+func TestParser_symbolFromACommand(t *testing.T) {
 	tests := []struct {
 		command string
-		commandType CommandType
 		wanted string
 	}{
-		{command: "(LOOP)", commandType: LCommand, wanted: "LOOP"},
-		{command: "@100", commandType: ACommand, wanted: "100"},
-		{command: "0;JMP", commandType: CCommand, wanted: ""},
+		{command: "@i", wanted: "i"},
+		{command: "@100", wanted: "100"},
 	}
 
 	for _, test := range tests {
 		parser := &Parser{}
 		parser.currentCommand = test.command
-		parser.currentCommandType = test.commandType
-		if got := parser.symbol(); got != test.wanted {
-			t.Errorf("symbol() = %s, want %s", got, test.wanted)
+		if got := parser.symbolFromACommand(); got != test.wanted {
+			t.Errorf("symbolFromACommand() = %s, want %s", got, test.wanted)
+		}
+	}
+}
+
+func TestParser_symbolFromLCommand(t *testing.T) {
+	tests := []struct {
+		command string
+		wanted string
+	}{
+		{command: "(LOOP)", wanted: "LOOP"},
+	}
+
+	for _, test := range tests {
+		parser := &Parser{}
+		parser.currentCommand = test.command
+		if got := parser.symbolFromLCommand(); got != test.wanted {
+			t.Errorf("symbolFromLCommand() = %s, want %s", got, test.wanted)
 		}
 	}
 }
@@ -81,22 +110,18 @@ func TestParser_symbol(t *testing.T) {
 func TestParser_destCompJump(t *testing.T) {
 	tests := []struct {
 		command string
-		commandType CommandType
 		dest string
 		comp string
 		jump string
 	} {
-		{command: "D;JGT", commandType: CCommand, dest: "", comp: "D", jump: "JGT"},
-		{command: "D=D+A", commandType: CCommand, dest: "D", comp: "D+A", jump: ""},
-		{command: "D=D+A;JGT", commandType: CCommand, dest: "D", comp: "D+A", jump: "JGT"},
-		{command: "@i", commandType: ACommand, dest: "", comp: "", jump: ""},
-		{command: "(LOOP)", commandType: LCommand, dest: "", comp: "", jump: ""},
+		{command: "D;JGT", dest: "", comp: "D", jump: "JGT"},
+		{command: "D=D+A", dest: "D", comp: "D+A", jump: ""},
+		{command: "D=D+A;JGT", dest: "D", comp: "D+A", jump: "JGT"},
 	}
 
 	for _, test := range tests {
 		parser := &Parser{}
 		parser.currentCommand = test.command
-		parser.currentCommandType = test.commandType
 		dest, comp, jump := parser.destCompJump()
 		if (dest != test.dest) || (comp != test.comp) || (jump != test.jump) {
 			t.Errorf(
