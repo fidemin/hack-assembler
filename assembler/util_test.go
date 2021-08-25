@@ -4,6 +4,30 @@ import (
 	"testing"
 )
 
+func Test_bitsMinMax(t *testing.T) {
+	tests := []struct{
+		bitsLength uint
+		unsigned bool
+		min int64
+		max uint64
+	}{
+		{bitsLength: 1, unsigned: true, min: int64(0), max: uint64(1)},
+		{bitsLength: 2, unsigned: false, min: int64(-2), max: uint64(1)},
+		{bitsLength: 2, unsigned: true, min: int64(0), max: uint64(3)},
+		{bitsLength: 15, unsigned: false, min: int64(-16384), max: uint64(16383)},
+		{bitsLength: 15, unsigned: true, min: int64(0), max: uint64(32767)},
+		{bitsLength: 64, unsigned: false, min: int64(-9223372036854775808), max: uint64(9223372036854775807)},
+		{bitsLength: 64, unsigned: true, min: int64(0), max: uint64(18446744073709551615)},
+	}
+
+	for _, test := range tests {
+		min, max := bitsMinMax(test.bitsLength, test.unsigned)
+		if min != test.min || max != test.max {
+			t.Errorf("bitsMinMax() = %d, %d, want %d, %d", min, max, test.min, test.max)
+		}
+	}
+}
+
 func Test_notBits(t *testing.T) {
 	tests := []struct {
 		bits string

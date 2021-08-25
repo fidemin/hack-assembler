@@ -7,6 +7,62 @@ import (
 	"strings"
 )
 
+func bitsMinMax(bitsLength uint, unsigned bool) (int64, uint64) {
+	if bitsLength < 1 || bitsLength > 64 {
+		panic("bitsMinMax(): bitsLength should be between 1 and 64")
+	}
+
+	if bitsLength == 1 && !unsigned {
+		panic("bitsMinMax(): singed 1 bitsLength is nonsense")
+	}
+
+	boundary := int64(1)
+	for i := 0; i < int(bitsLength)-1; i++ {
+		boundary = boundary * 2
+	}
+
+	min := int64(0)
+	if !unsigned {
+		min = - boundary
+	}
+
+	max := uint64(boundary - 1)
+	if unsigned {
+		max = uint64(boundary * 2 - 1)
+	}
+
+	return min, max
+}
+
+type Bits struct {
+	originalInt int64
+	unsigned bool
+}
+
+func NewBits(originalInt int64, bitsLength int, unsigned bool) (*Bits, error) {
+	if bitsLength < 1 || bitsLength > 64 {
+		return nil, errors.New("bitsLength should be between 2 and 64")
+	}
+
+	boundary := int64(1)
+	for i := 0; i < bitsLength; i++ {
+		boundary = boundary * 2
+	}
+
+	min := int64(0)
+	if !unsigned {
+		min = - (boundary / 2)
+	}
+
+	max := boundary
+	if !unsigned {
+		max = max / 2 - 1
+	}
+	fmt.Println(min)
+
+	return nil, nil
+}
+
 func notBits(bits string) string {
 	length := len(bits)
 	var bitsArray = make([]string, length, length)
