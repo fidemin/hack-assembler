@@ -21,9 +21,9 @@ func bitsMinMax(bitsLength uint, unsigned bool) (int64, uint64) {
 		boundary = boundary * 2
 	}
 
-	min := int64(0)
-	if !unsigned {
-		min = - boundary
+	min := -boundary
+	if unsigned {
+		min = int64(0)
 	}
 
 	max := uint64(boundary - 1)
@@ -35,32 +35,50 @@ func bitsMinMax(bitsLength uint, unsigned bool) (int64, uint64) {
 }
 
 type Bits struct {
-	originalInt int64
+	originalInt64 int64
+	originalUInt64 uint64
 	unsigned bool
 }
 
-func NewBits(originalInt int64, bitsLength int, unsigned bool) (*Bits, error) {
+func NewBits(originalIntString string, bitsLength uint, unsigned bool) (*Bits, error) {
+	bits := &Bits{}
+	bits.unsigned = unsigned
+	if unsigned {
+		originalUint64, err := strconv.ParseUint(originalIntString, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		bits.originalUInt64 = originalUint64
+
+	} else {
+		originalInt64, err := strconv.ParseInt(originalIntString, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		bits.originalInt64 = originalInt64
+	}
+
 	if bitsLength < 1 || bitsLength > 64 {
-		return nil, errors.New("bitsLength should be between 2 and 64")
+		return nil, errors.New("bitsLength should be between 1 and 64")
 	}
 
-	boundary := int64(1)
-	for i := 0; i < bitsLength; i++ {
-		boundary = boundary * 2
+	if bitsLength == 1 && !unsigned {
+
+		return nil, errors.New("singed 1 bitsLength is nonsense")
 	}
 
-	min := int64(0)
-	if !unsigned {
-		min = - (boundary / 2)
-	}
+	min, max := bitsMinMax(bitsLength, unsigned)
 
-	max := boundary
-	if !unsigned {
-		max = max / 2 - 1
+	if unsigned {
+		if bits.originalUInt64 < uint64(min) || bits.originalUInt64 > max {
+			return nil, errors.New(fmt.Sprintf("%d is not between %d, %d", bits.originalUInt64, min, max))
+		}
+	} else {
+		if bits.originalInt64 < min || bits.originalInt64 > int64(max) {
+			return nil, errors.New(fmt.Sprintf("%d is not between %d, %d", bits.originalInt64, min, max))
+		}
 	}
-	fmt.Println(min)
-
-	return nil, nil
+	return bits, nil
 }
 
 func notBits(bits string) string {

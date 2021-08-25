@@ -28,6 +28,61 @@ func Test_bitsMinMax(t *testing.T) {
 	}
 }
 
+func Test_NewBits(t *testing.T) {
+	tests := []struct{
+		originalIntString string
+		bitsLength uint
+		unsigned bool
+		bits Bits
+		isErr bool
+	}{
+		{originalIntString: "10", bitsLength: 0, unsigned: true,
+			bits: Bits{}, isErr: true},
+		{originalIntString: "10", bitsLength: 1, unsigned: true,
+			bits: Bits{}, isErr: true},
+		{originalIntString: "-1", bitsLength: 1, unsigned: false,
+			bits: Bits{}, isErr: true},
+		{originalIntString: "1", bitsLength: 1, unsigned: true,
+			bits: Bits{originalUInt64: uint64(1), unsigned: true}, isErr: false},
+		{originalIntString: "2", bitsLength: 2, unsigned: false,
+			bits: Bits{}, isErr: true},
+		{originalIntString: "-3", bitsLength: 2, unsigned: false,
+			bits: Bits{}, isErr: true},
+		{originalIntString: "1", bitsLength: 2, unsigned: false,
+			bits: Bits{originalInt64: int64(1), unsigned: false}, isErr: false},
+		{originalIntString: "-2", bitsLength: 2, unsigned: false,
+			bits: Bits{originalInt64: int64(-2), unsigned: false}, isErr: false},
+		{originalIntString: "3", bitsLength: 2, unsigned: true,
+			bits: Bits{originalUInt64: uint64(3), unsigned: true}, isErr: false},
+		{originalIntString: "32767", bitsLength: 15, unsigned: true,
+			bits: Bits{originalUInt64: uint64(32767), unsigned: true}, isErr: false},
+		{originalIntString: "-9223372036854775808", bitsLength: 64, unsigned: false,
+			bits: Bits{originalInt64: int64(-9223372036854775808), unsigned: false}, isErr: false},
+		{originalIntString: "9223372036854775807", bitsLength: 64, unsigned: false,
+			bits: Bits{originalInt64: int64(9223372036854775807), unsigned: false}, isErr: false},
+		{originalIntString: "18446744073709551615", bitsLength: 64, unsigned: true,
+			bits: Bits{originalUInt64: uint64(18446744073709551615), unsigned: true}, isErr: false},
+	}
+
+	for _, test := range tests {
+		bits, err := NewBits(test.originalIntString, test.bitsLength, test.unsigned)
+		if test.isErr && err == nil {
+			t.Errorf("NewBits() should return error: %+v", test)
+		}
+
+		if !test.isErr && err != nil {
+			t.Errorf("NewBits() should not return error: %s", err)
+		}
+
+		if bits != nil {
+			if *bits != test.bits {
+				t.Errorf("NewBits() = %+v, but want%+v", *bits, test.bits)
+			}
+		}
+
+	}
+}
+
 func Test_notBits(t *testing.T) {
 	tests := []struct {
 		bits string
