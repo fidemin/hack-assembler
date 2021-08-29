@@ -7,17 +7,17 @@ import (
 	"strings"
 )
 
-func bitsMinMax(bitsLength uint, unsigned bool) (int64, uint64) {
+func bitsMinMax(bitsLength int, unsigned bool) (int64, uint64) {
 	if bitsLength < 1 || bitsLength > 64 {
-		panic("bitsMinMax(): bitsLength should be between 1 and 64")
+		panic("bitsMinMax(): length should be between 1 and 64")
 	}
 
 	if bitsLength == 1 && !unsigned {
-		panic("bitsMinMax(): singed 1 bitsLength is nonsense")
+		panic("bitsMinMax(): singed 1 length is nonsense")
 	}
 
 	boundary := int64(1)
-	for i := 0; i < int(bitsLength)-1; i++ {
+	for i := 0; i < bitsLength-1; i++ {
 		boundary = boundary * 2
 	}
 
@@ -34,15 +34,19 @@ func bitsMinMax(bitsLength uint, unsigned bool) (int64, uint64) {
 	return min, max
 }
 
-type Bits struct {
+// IntToBitsConverter can be used to convert int string to bits string
+// integer with size from 1 bit to 64 bit size can be converted!
+type IntToBitsConverter struct {
 	originalInt64 int64
 	originalUInt64 uint64
-	unsigned bool
+	length         int
+	unsigned       bool
 }
 
-func NewBits(originalIntString string, bitsLength uint, unsigned bool) (*Bits, error) {
-	bits := &Bits{}
+func NewIntToBitsConverter(originalIntString string, bitsLength int, unsigned bool) (*IntToBitsConverter, error) {
+	bits := &IntToBitsConverter{}
 	bits.unsigned = unsigned
+	bits.length = bitsLength
 	if unsigned {
 		originalUint64, err := strconv.ParseUint(originalIntString, 10, 64)
 		if err != nil {
@@ -59,12 +63,11 @@ func NewBits(originalIntString string, bitsLength uint, unsigned bool) (*Bits, e
 	}
 
 	if bitsLength < 1 || bitsLength > 64 {
-		return nil, errors.New("bitsLength should be between 1 and 64")
+		return nil, errors.New("length should be between 1 and 64")
 	}
 
 	if bitsLength == 1 && !unsigned {
-
-		return nil, errors.New("singed 1 bitsLength is nonsense")
+		return nil, errors.New("singed 1 length is nonsense")
 	}
 
 	min, max := bitsMinMax(bitsLength, unsigned)
@@ -81,7 +84,55 @@ func NewBits(originalIntString string, bitsLength uint, unsigned bool) (*Bits, e
 	return bits, nil
 }
 
-func notBits(bits string) string {
+func (b *IntToBitsConverter) ToBits() string {
+	if !b.unsigned {
+		if b.originalInt64 < 0 {
+			// For negative integer -K, not(K-1) is binary expression of -K
+			// e.g. -5 -> not(5-1) -> not(4) -> Not(0010) -> 1101
+			integer := -b.originalInt64 - 1
+			bitsString := strconv.FormatInt(integer, 2)
+			bitsString = b.fillZerosToBits(bitsString)
+			return b.not(bitsString)
+		} else {
+			bitsString := strconv.FormatInt(b.originalInt64, 2)
+			return b.fillZerosToBits(bitsString)
+		}
+	} else {
+		bitsString := strconv.FormatUint(b.originalUInt64, 2)
+		return b.fillZerosToBits(bitsString)
+	}
+}
+
+func (b *IntToBitsConverter) fillZerosToBits(originalBits string) string {
+	originalLength := len(originalBits)
+
+	lengthOfZeros := b.length - originalLength
+
+	if lengthOfZeros < 0 {
+		panic("length of originalBits should be smaller or equal than length")
+	}
+
+	if lengthOfZeros == 0 {
+		return originalBits
+	}
+
+	var bitsArray = make([]string, b.length, b.length)
+	cursor := 0
+
+	for i:= 0; i < lengthOfZeros; i++ {
+		bitsArray[cursor] = "0"
+		cursor += 1
+	}
+
+	for _, b := range originalBits {
+		bitsArray[cursor] = string(b)
+		cursor += 1
+	}
+
+	return strings.Join(bitsArray, "")
+}
+
+func (b *IntToBitsConverter) not(bits string) string {
 	length := len(bits)
 	var bitsArray = make([]string, length, length)
 
@@ -95,60 +146,4 @@ func notBits(bits string) string {
 		}
 	}
 	return strings.Join(bitsArray, "")
-}
-
-func fillZerosToBits(originalBits string, length int) (string, error) {
-	originalLength := len(originalBits)
-
-	lengthOfZeros := length - originalLength
-
-	if lengthOfZeros < 0 {
-		return "", errors.New("length of original bits is larger than required length")
-	}
-
-	if lengthOfZeros == 0 {
-		return originalBits, nil
-	}
-
-	var bitsArray = make([]string, length, length)
-	cursor := 0
-
-	for i:= 0; i < lengthOfZeros; i++ {
-		bitsArray[cursor] = "0"
-		cursor += 1
-	}
-
-	for _, b := range originalBits {
-		bitsArray[cursor] = string(b)
-		cursor += 1
-	}
-
-	return strings.Join(bitsArray, ""), nil
-}
-
-func IntTo15BitsString(integer int) string {
-	// if not 15bit integer => if not (-2^14 <= integer < 2^14 - 1)
-	if integer < -16384 || integer > 16383 {
-		panic(fmt.Sprintf("integer %d is not in range of 15bit int", integer))
-	}
-
-	if integer < 0 {
-		//// For negative integer -K, not(K-1) is binary expression of -K
-		//// e.g. -5 -> not(5-1) -> not(4) -> Not(0010) -> 1101
-		integer = -integer - 1
-		originalBits := strconv.FormatInt(int64(integer), 2)
-		bits, err := fillZerosToBits(originalBits, 15)
-		if err != nil {
-			panic(err.Error())
-		}
-		return notBits(bits)
-	}
-
-	// for zero or positive integer
-	originalBits := strconv.FormatInt(int64(integer), 2)
-	bits, err := fillZerosToBits(originalBits, 15)
-	if err != nil {
-		panic(err.Error())
-	}
-	return bits
 }

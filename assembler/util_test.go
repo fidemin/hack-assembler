@@ -6,7 +6,7 @@ import (
 
 func Test_bitsMinMax(t *testing.T) {
 	tests := []struct{
-		bitsLength uint
+		bitsLength int
 		unsigned bool
 		min int64
 		max uint64
@@ -30,60 +30,97 @@ func Test_bitsMinMax(t *testing.T) {
 
 func Test_NewBits(t *testing.T) {
 	tests := []struct{
-		originalIntString string
-		bitsLength uint
-		unsigned bool
-		bits Bits
-		isErr bool
+		intString string
+		length    int
+		unsigned  bool
+		bits     IntToBitsConverter
+		isErr    bool
 	}{
-		{originalIntString: "10", bitsLength: 0, unsigned: true,
-			bits: Bits{}, isErr: true},
-		{originalIntString: "10", bitsLength: 1, unsigned: true,
-			bits: Bits{}, isErr: true},
-		{originalIntString: "-1", bitsLength: 1, unsigned: false,
-			bits: Bits{}, isErr: true},
-		{originalIntString: "1", bitsLength: 1, unsigned: true,
-			bits: Bits{originalUInt64: uint64(1), unsigned: true}, isErr: false},
-		{originalIntString: "2", bitsLength: 2, unsigned: false,
-			bits: Bits{}, isErr: true},
-		{originalIntString: "-3", bitsLength: 2, unsigned: false,
-			bits: Bits{}, isErr: true},
-		{originalIntString: "1", bitsLength: 2, unsigned: false,
-			bits: Bits{originalInt64: int64(1), unsigned: false}, isErr: false},
-		{originalIntString: "-2", bitsLength: 2, unsigned: false,
-			bits: Bits{originalInt64: int64(-2), unsigned: false}, isErr: false},
-		{originalIntString: "3", bitsLength: 2, unsigned: true,
-			bits: Bits{originalUInt64: uint64(3), unsigned: true}, isErr: false},
-		{originalIntString: "32767", bitsLength: 15, unsigned: true,
-			bits: Bits{originalUInt64: uint64(32767), unsigned: true}, isErr: false},
-		{originalIntString: "-9223372036854775808", bitsLength: 64, unsigned: false,
-			bits: Bits{originalInt64: int64(-9223372036854775808), unsigned: false}, isErr: false},
-		{originalIntString: "9223372036854775807", bitsLength: 64, unsigned: false,
-			bits: Bits{originalInt64: int64(9223372036854775807), unsigned: false}, isErr: false},
-		{originalIntString: "18446744073709551615", bitsLength: 64, unsigned: true,
-			bits: Bits{originalUInt64: uint64(18446744073709551615), unsigned: true}, isErr: false},
+		{intString: "10", length: 0, unsigned: true,
+			bits: IntToBitsConverter{}, isErr: true},
+		{intString: "10", length: 1, unsigned: true,
+			bits: IntToBitsConverter{}, isErr: true},
+		{intString: "-1", length: 1, unsigned: false,
+			bits: IntToBitsConverter{}, isErr: true},
+		{intString: "1", length: 1, unsigned: true,
+			bits: IntToBitsConverter{originalUInt64: uint64(1), length: 1, unsigned: true}, isErr: false},
+		{intString: "2", length: 2, unsigned: false,
+			bits: IntToBitsConverter{}, isErr: true},
+		{intString: "-3", length: 2, unsigned: false,
+			bits: IntToBitsConverter{}, isErr: true},
+		{intString: "1", length: 2, unsigned: false,
+			bits: IntToBitsConverter{originalInt64: int64(1), length: 2, unsigned: false}, isErr: false},
+		{intString: "-2", length: 2, unsigned: false,
+			bits: IntToBitsConverter{originalInt64: int64(-2), length: 2, unsigned: false}, isErr: false},
+		{intString: "3", length: 2, unsigned: true,
+			bits: IntToBitsConverter{originalUInt64: uint64(3), length: 2, unsigned: true}, isErr: false},
+		{intString: "32767", length: 15, unsigned: true,
+			bits: IntToBitsConverter{originalUInt64: uint64(32767), length: 15, unsigned: true}, isErr: false},
+		{intString: "-9223372036854775808", length: 64, unsigned: false,
+			bits: IntToBitsConverter{originalInt64: int64(-9223372036854775808), length: 64, unsigned: false}, isErr: false},
+		{intString: "9223372036854775807", length: 64, unsigned: false,
+			bits: IntToBitsConverter{originalInt64: int64(9223372036854775807), length: 64, unsigned: false}, isErr: false},
+		{intString: "18446744073709551615", length: 64, unsigned: true,
+			bits: IntToBitsConverter{originalUInt64: uint64(18446744073709551615), length: 64, unsigned: true}, isErr: false},
 	}
 
 	for _, test := range tests {
-		bits, err := NewBits(test.originalIntString, test.bitsLength, test.unsigned)
+		bits, err := NewIntToBitsConverter(test.intString, test.length, test.unsigned)
 		if test.isErr && err == nil {
-			t.Errorf("NewBits() should return error: %+v", test)
+			t.Errorf("NewIntToBitsConverter() should return error: %+v", test)
 		}
 
 		if !test.isErr && err != nil {
-			t.Errorf("NewBits() should not return error: %s", err)
+			t.Errorf("NewIntToBitsConverter() should not return error: %s", err)
 		}
 
 		if bits != nil {
 			if *bits != test.bits {
-				t.Errorf("NewBits() = %+v, but want%+v", *bits, test.bits)
+				t.Errorf("NewIntToBitsConverter() = %+v, but want%+v", *bits, test.bits)
 			}
 		}
 
 	}
 }
 
-func Test_notBits(t *testing.T) {
+func TestIntToBitsConverter_ToBits(t *testing.T) {
+	tests := []struct{
+		intString string
+		length int
+		unsigned bool
+		wanted string
+	}{
+		{intString: "0", length: 1, unsigned: true, wanted: "0"},
+		{intString: "1", length: 1, unsigned: true, wanted: "1"},
+		{intString: "-1", length: 2, unsigned: false, wanted: "11"},
+		{intString: "1", length: 2, unsigned: false, wanted: "01"},
+		{intString: "-2", length: 2, unsigned: false, wanted: "10"},
+		{intString: "32767", length: 15, unsigned: true, wanted: "111111111111111"},
+		{intString: "14", length: 15, unsigned: true, wanted: "000000000001110"},
+		{intString: "0", length: 15, unsigned: true, wanted: "000000000000000"},
+		{intString: "-16384", length: 15, unsigned: false, wanted: "100000000000000"},
+		{intString: "-15", length: 15, unsigned: false, wanted: "111111111110001"},
+		{intString: "-9223372036854775808", length: 64, unsigned: false,
+			wanted: "1000000000000000000000000000000000000000000000000000000000000000"},
+
+		{intString: "9223372036854775807", length: 64, unsigned: false,
+			wanted: "0111111111111111111111111111111111111111111111111111111111111111"},
+		{intString: "18446744073709551615", length: 64, unsigned: true,
+			wanted: "1111111111111111111111111111111111111111111111111111111111111111"},
+	}
+
+	for _, test := range tests {
+		converter, err := NewIntToBitsConverter(test.intString, test.length, test.unsigned)
+		if err != nil {
+			t.Errorf("IntToBitsConverter.ToBits() results in error: %s", err.Error())
+		}
+		if got := converter.ToBits(); got != test.wanted {
+			t.Errorf("IntToBitsConverter.ToBits() = %s, want %s", got, test.wanted)
+		}
+	}
+}
+
+func TestBits_not(t *testing.T) {
 	tests := []struct {
 		bits string
 		wanted string
@@ -95,51 +132,28 @@ func Test_notBits(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if got := notBits(test.bits); got != test.wanted {
+		b := IntToBitsConverter{}
+		if got := b.not(test.bits); got != test.wanted {
 			t.Errorf("notBits() = %s, want %s", got, test.wanted)
 		}
 	}
 }
 
-func Test_fillZerosToBits(t *testing.T) {
+func TestBits_fillZerosToBits(t *testing.T) {
 	tests := []struct {
 		originalBits string
 		length int
 		wanted string
 		err bool
 	}{
-		{originalBits: "1010", length: 2, wanted: "", err: true},
 		{originalBits: "1010", length: 4, wanted: "1010", err: false},
 		{originalBits: "1010", length: 6, wanted: "001010", err: false},
 	}
 
 	for _, test := range tests {
-		bits, err := fillZerosToBits(test.originalBits, test.length)
-		if err != nil && !test.err {
-			t.Errorf("fillZerosToBits() should cause error for %s, %d", test.originalBits, test.length)
-		}
-
-		if bits != test.wanted {
-			t.Errorf("fillZerosToBits() = %s, want %s", bits, test.wanted)
-		}
-	}
-}
-
-func Test_IntTo15BitsString(t *testing.T) {
-	tests := []struct{
-		integer int
-		wanted string
-	}{
-		{integer: 16383, wanted: "011111111111111"},
-		{integer: 14, wanted: "000000000001110"},
-		{integer: 0, wanted: "000000000000000"},
-		{integer: -16384, wanted: "100000000000000"},
-		{integer: -15, wanted: "111111111110001"},
-	}
-
-	for _, test := range tests {
-		if bits := IntTo15BitsString(test.integer); bits != test.wanted {
-			t.Errorf("InteTo15BitsString() = %s, want %s", bits, test.wanted)
+		bits := &IntToBitsConverter{length: test.length}
+		if got := bits.fillZerosToBits(test.originalBits); got != test.wanted {
+			t.Errorf("IntToBitsConverter.fillZerosToBits() = %s, want %s", got, test.wanted)
 		}
 	}
 }
