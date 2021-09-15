@@ -2,7 +2,7 @@ package assembler
 
 import "testing"
 
-func TestCodeBits_generateFromACommand(t *testing.T) {
+func TestCodeBits_fromACommand(t *testing.T) {
 	tests := []struct {
 		command Command
 		wanted string
@@ -17,21 +17,21 @@ func TestCodeBits_generateFromACommand(t *testing.T) {
 
 	for _, test := range tests {
 		codebits := &CodeBits{command: test.command}
-		got, err := codebits.generateFromACommand()
+		got, err := codebits.fromACommand()
 
 		if test.isErr {
 			if err == nil {
 				t.Errorf(
-					"CodeBits.generateFromACommand(): error should not be nil with command %+v", test.command)
+					"CodeBits.fromACommand(): error should not be nil with command %+v", test.command)
 			}
 		} else {
 			if err != nil {
 				t.Errorf(
-					"CodeBits.generateFromACommand(): unexpected error '%s'  with %+v",
+					"CodeBits.fromACommand(): unexpected error '%s'  with %+v",
 					err.Error(), test.command)
 			} else {
 				if got != test.wanted {
-					t.Errorf("CodeBits.generateFromACommand() = %s, but want %s", got, test.wanted)
+					t.Errorf("CodeBits.fromACommand() = %s, but want %s", got, test.wanted)
 				}
 			}
 
@@ -40,7 +40,7 @@ func TestCodeBits_generateFromACommand(t *testing.T) {
 }
 
 
-func TestCodeBits_generateFromCCommand(t *testing.T) {
+func TestCodeBits_fromCCommand(t *testing.T) {
 	tests := []struct {
 		command Command
 		wanted string
@@ -70,21 +70,21 @@ func TestCodeBits_generateFromCCommand(t *testing.T) {
 
 	for _, test := range tests {
 		codebits := &CodeBits{command: test.command}
-		got, err := codebits.generateFromCCommand()
+		got, err := codebits.fromCCommand()
 
 		if test.isErr {
 			if err == nil {
 				t.Errorf(
-					"CodeBits.generateFromCCommand(): error should not be nil with command %+v", test.command)
+					"CodeBits.fromCCommand(): error should not be nil with command %+v", test.command)
 			}
 		} else {
 			if err != nil {
 				t.Errorf(
-					"CodeBits.generateFromCCommand(): unexpected error '%s'  with %+v",
+					"CodeBits.fromCCommand(): unexpected error '%s'  with %+v",
 					err.Error(), test.command)
 			} else {
 				if got != test.wanted {
-					t.Errorf("CodeBits.generateFromCCommand() = %s, but want %s", got, test.wanted)
+					t.Errorf("CodeBits.fromCCommand() = %s, but want %s", got, test.wanted)
 				}
 			}
 

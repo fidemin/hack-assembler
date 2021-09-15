@@ -74,7 +74,7 @@ func NewCodeBits(command Command) *CodeBits {
 	}
 }
 
-func (b *CodeBits) generateFromACommand() (string, error) {
+func (b *CodeBits) fromACommand() (string, error) {
 	symbol := b.command.Symbol
 
 	// TODO: need to implement for that symbol is not integer but variable
@@ -87,7 +87,7 @@ func (b *CodeBits) generateFromACommand() (string, error) {
 	return "1" + converter.ToBits(), nil
 }
 
-func (b *CodeBits) generateFromCCommand() (string, error) {
+func (b *CodeBits) fromCCommand() (string, error) {
 	compBits, ok := compToBits[b.command.Comp]
 	if !ok {
 		return "", errors.New(fmt.Sprintf("%s is not proper comp", b.command.Comp))
