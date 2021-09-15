@@ -74,6 +74,18 @@ func NewCodeBits(command Command) *CodeBits {
 	}
 }
 
+// Generate generates hack assembly bits from command
+func (b *CodeBits) Generate() (string, error){
+	switch b.command.CommandType {
+	case ACommand:
+		return b.fromACommand()
+	case CCommand:
+		return b.fromCCommand()
+	default:
+		return "", errors.New(fmt.Sprintf("%s is not proper command type", b.command.CommandType))
+	}
+}
+
 func (b *CodeBits) fromACommand() (string, error) {
 	symbol := b.command.Symbol
 
