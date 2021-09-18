@@ -18,7 +18,7 @@ func (a *Assembler) WriteBinaryCode() {
 	parser := NewParser(a.reader)
 
 	for parser.Advance() {
-		command := parser.Parse()
+		command := parser.ParseOne()
 		if command.IsNil() {
 			continue
 		}

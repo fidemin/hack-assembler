@@ -70,8 +70,8 @@ func (p *Parser) Advance() bool {
 	return false
 }
 
-// Parse parses currentCommand and convert it to Command object
-func (p *Parser) Parse() Command {
+// ParseOne parses currentCommand and convert it to Command object
+func (p *Parser) ParseOne() Command {
 	var symbol, dest, comp, jump string
 	commandType := p.commandType()
 

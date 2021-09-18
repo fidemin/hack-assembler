@@ -31,7 +31,7 @@ D=D-A`
 	}
 }
 
-func TestParser_Parse(t *testing.T) {
+func TestParser_ParseOne(t *testing.T) {
 	tests := []struct {
 		commandString string
 		command Command
@@ -47,8 +47,8 @@ func TestParser_Parse(t *testing.T) {
 	for _, test := range tests {
 		parser := Parser{}
 		parser.currentCommand = test.commandString
-		if got := parser.Parse(); got != test.command {
-			t.Errorf("Parse() = %+v, want %+v", got, test.command)
+		if got := parser.ParseOne(); got != test.command {
+			t.Errorf("ParseOne() = %+v, want %+v", got, test.command)
 		}
 	}
 }
