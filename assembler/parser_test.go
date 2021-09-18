@@ -1,6 +1,7 @@
 package assembler
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -37,6 +38,55 @@ D=D+A;JGT`)
 			t.Errorf("parser.Commands[%d] = %s, but want %s", i, got, wanted)
 		}
 	}
+}
+
+func TestParser_fillSymbolTable_success(t *testing.T) {
+	reader := strings.NewReader(
+		`@i
+@100
+(LOOP)
+D;JGT
+D=D+A
+D=D+A;JGT
+(LOOP1)`)
+
+	parser := NewParser(reader)
+	parser.parseToCommands()
+	err := parser.fillSymbolTable()
+	if err != nil {
+		t.Errorf("err: %s", err)
+		return
+	}
+
+	if parser.symbolTable["LOOP"] != 2 {
+		t.Errorf("LOOP label ROM addr %d, but want 2", parser.symbolTable["LOOP"])
+		return
+	}
+
+	if parser.symbolTable["LOOP1"] != 5 {
+		t.Errorf("LOOP1 label ROM addr %d, but want 5", parser.symbolTable["LOOP1"])
+		return
+	}
+}
+
+func TestParser_fillSymbolTable_error(t *testing.T) {
+	reader := strings.NewReader(
+		`@i
+@100
+(R0)
+D;JGT
+D=D+A
+D=D+A;JGT
+(LOOP1)`)
+
+	parser := NewParser(reader)
+	parser.parseToCommands()
+	err := parser.fillSymbolTable()
+	if err == nil {
+		t.Errorf("parser.fillSymbolTable() should not be nil")
+		return
+	}
+	fmt.Println(fmt.Sprintf("Error Message Check: %s", err))
 }
 
 func TestParser_Advance(t *testing.T) {

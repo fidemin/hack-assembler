@@ -2,6 +2,7 @@ package assembler
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -13,6 +14,7 @@ type Parser struct {
 	scanner *bufio.Scanner
 	currentCommand string
 	currentRAMAddr uint16
+	currentROMAddr uint16
 	symbolTable map[string]uint16
 }
 
@@ -57,6 +59,31 @@ func (p *Parser) parseToCommands() {
 	for p.Advance() {
 		p.Commands = append(p.Commands, p.ParseOne())
 	}
+}
+
+func (p *Parser) fillSymbolTable() error {
+	// check LCommand's symbol exists in predefined symbol.
+	// If exists, returns error
+	for _, command := range p.Commands {
+		if command.CommandType == LCommand {
+			if _, ok := p.symbolTable[command.Symbol]; ok {
+				return errors.New(fmt.Sprintf("%s label already exists in predefined symbol", command.Symbol))
+			}
+		}
+	}
+
+	// fill SymbolTable with label and ROM address
+	for _, command := range p.Commands {
+		if command.CommandType == LCommand {
+			if _, ok := p.symbolTable[command.Symbol]; !ok {
+				p.symbolTable[command.Symbol] = p.currentROMAddr
+			}
+		}
+		if command.CommandType == CCommand || command.CommandType == ACommand {
+			p.currentROMAddr += 1
+		}
+	}
+	return nil
 }
 
 // Advance reads next line and make it to current command
