@@ -9,6 +9,7 @@ import (
 
 // Parser parses hack assembly program line by line.
 type Parser struct {
+	Commands []Command
 	scanner *bufio.Scanner
 	currentCommand string
 	currentRAMAddr uint16
@@ -47,7 +48,15 @@ func NewParser(reader io.Reader) *Parser {
 		"KBD": 24576,
 	}
 
+	parser.Commands = []Command{}
+
 	return parser
+}
+
+func (p *Parser) parseToCommands() {
+	for p.Advance() {
+		p.Commands = append(p.Commands, p.ParseOne())
+	}
 }
 
 // Advance reads next line and make it to current command
