@@ -89,7 +89,6 @@ func (b *CodeBits) Generate() (string, error){
 func (b *CodeBits) fromACommand() (string, error) {
 	symbol := b.command.Symbol
 
-	// TODO: need to implement for that symbol is not integer but variable
 	converter, err := NewIntToBitsConverter(symbol, 15, true)
 
 	if err != nil {
