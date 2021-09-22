@@ -11,6 +11,7 @@ const (
 type Command struct {
 	CommandType CommandType
 	Symbol string
+	SymbolInt uint16
 	Dest string
 	Comp string
 	Jump string

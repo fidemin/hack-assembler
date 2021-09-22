@@ -35,7 +35,7 @@ D=D+A;JGT`)
 	for i, got := range parser.Commands {
 		wanted := wantedCommands[i]
 		if got != wanted {
-			t.Errorf("parser.Commands[%d] = %s, but want %s", i, got, wanted)
+			t.Errorf("parser.Commands[%d] = +%v, but want +%v", i, got, wanted)
 		}
 	}
 }
@@ -87,6 +87,50 @@ D=D+A;JGT
 		return
 	}
 	fmt.Println(fmt.Sprintf("Error Message Check: %s", err))
+}
+
+func TestParser_parseACommandSymbolToInt(t *testing.T) {
+	reader := strings.NewReader(
+		`@i
+@100
+D;JGT
+@R0
+D=D+A
+D=D+A;JGT
+@i`)
+	parser := NewParser(reader)
+	parser.parseToCommands()
+	parser.parseACommandSymbolToInt()
+
+	if parser.Commands[0].SymbolInt != uint16(16) {
+		t.Errorf("RAM Addr %d, but want 16", parser.Commands[0].SymbolInt)
+		return
+	}
+
+	if parser.Commands[1].SymbolInt != uint16(100) {
+		t.Errorf("RAM Addr %d, but want 100", parser.Commands[1].SymbolInt)
+		return
+	}
+
+	if parser.Commands[3].SymbolInt != uint16(0) {
+		t.Errorf("RAM Addr %d, but want 0", parser.Commands[3].SymbolInt)
+		return
+	}
+
+	if parser.Commands[6].SymbolInt != uint16(16) {
+		t.Errorf("RAM Addr %d, but want 16", parser.Commands[6].SymbolInt)
+		return
+	}
+
+	if parser.currentRAMAddr != uint16(17) {
+		t.Errorf("parser.currentRAMAddr %d, but want 17", parser.currentRAMAddr)
+		return
+	}
+
+	if parser.symbolTable["i"] != uint16(16) {
+		t.Errorf("parser.symbolTable[i] %d, but want 16", parser.symbolTable["i"])
+		return
+	}
 }
 
 func TestParser_Advance(t *testing.T) {

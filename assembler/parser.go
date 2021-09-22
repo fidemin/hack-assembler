@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 )
 
@@ -50,6 +51,12 @@ func NewParser(reader io.Reader) *Parser {
 		"KBD": 24576,
 	}
 
+	// initialize ROM Addr counter
+	parser.currentROMAddr = 0
+
+	// initialize RAM Addr counter
+	parser.currentRAMAddr = 16
+
 	parser.Commands = []Command{}
 
 	return parser
@@ -73,6 +80,7 @@ func (p *Parser) fillSymbolTable() error {
 	}
 
 	// fill SymbolTable with label and ROM address
+	// TODO: check when LCommand has same label -> parse error
 	for _, command := range p.Commands {
 		if command.CommandType == LCommand {
 			if _, ok := p.symbolTable[command.Symbol]; !ok {
@@ -84,6 +92,29 @@ func (p *Parser) fillSymbolTable() error {
 		}
 	}
 	return nil
+}
+
+func (p *Parser) parseACommandSymbolToInt() {
+	for i, command := range p.Commands {
+		if command.CommandType == ACommand {
+			symbol := command.Symbol
+			symbolInt, err := strconv.ParseUint(symbol, 10, 64)
+			// symbol is int string
+			if err == nil {
+				p.Commands[i].SymbolInt = uint16(symbolInt)
+				continue
+			}
+
+			// symbol is not int string but variable
+			if symbolInt16, ok := p.symbolTable[symbol]; ok {
+				p.Commands[i].SymbolInt = symbolInt16
+			} else {
+				p.symbolTable[symbol] = p.currentRAMAddr
+				p.Commands[i].SymbolInt = p.currentRAMAddr
+				p.currentRAMAddr += 1
+			}
+		}
+	}
 }
 
 // Advance reads next line and make it to current command
