@@ -6,6 +6,44 @@ import (
 	"testing"
 )
 
+func TestParser_Parse(t *testing.T) {
+	reader := strings.NewReader(
+		`@i
+@100
+(LOOP)
+@LOOP1
+D;JGT
+D=D+A
+D=D+A;JGT
+(LOOP1)`)
+	parser := NewParser(reader)
+	if err := parser.Parse(); err != nil {
+		t.Errorf("error happens: %s", err.Error())
+		return
+	}
+
+	wantedCommands := []Command{
+		{CommandType: ACommand, Symbol: "i", SymbolInt: 16},
+		{CommandType: ACommand, Symbol: "100", SymbolInt: 100},
+		{CommandType: LCommand, Symbol: "LOOP"},
+		{CommandType: ACommand, Symbol: "LOOP1", SymbolInt: 6},
+		{CommandType: CCommand, Dest: "", Comp: "D", Jump: "JGT"},
+		{CommandType: CCommand, Dest: "D", Comp: "D+A", Jump: ""},
+		{CommandType: CCommand, Dest: "D", Comp: "D+A", Jump: "JGT"},
+		{CommandType: LCommand, Symbol: "LOOP1"},
+	}
+
+	if len(parser.Commands) != len(wantedCommands) {
+		t.Errorf("len(parser.Commands) = %d, but want %d", len(parser.Commands), len(wantedCommands))
+	}
+
+	for i, got := range parser.Commands {
+		wanted := wantedCommands[i]
+		if got != wanted {
+			t.Errorf("parser.Commands[%d] = +%v, but want +%v", i, got, wanted)
+		}
+	}
+}
 
 func TestParser_parseToCommands(t *testing.T) {
 	reader := strings.NewReader(

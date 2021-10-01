@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// Parser parses hack assembly program line by line.
+// Parser parses hack assembly program codes.
 type Parser struct {
 	Commands []Command
 	scanner *bufio.Scanner
@@ -60,6 +60,16 @@ func NewParser(reader io.Reader) *Parser {
 	parser.Commands = []Command{}
 
 	return parser
+}
+
+// Parse parses all hack assembly program codes to Command structs
+func (p *Parser) Parse() error {
+	p.parseToCommands()
+	if err := p.fillSymbolTable(); err != nil {
+		return err
+	}
+	p.parseACommandSymbolToInt()
+	return nil
 }
 
 func (p *Parser) parseToCommands() {
